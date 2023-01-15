@@ -10,9 +10,10 @@
 	let options = {
 		allDaySlot: false,
 
+		height: '800px',
 		slotMinTime: new Date(Date.parse(new Date()) - 60 * 1000 * 60).getHours() + ':00:00',
-		slotMaxTime: new Date(Date.parse(new Date()) + 60 * 1000 * 120).getHours() + ':00:00',
-		slotDuration: 8 * 60, // in seconds
+		// slotMaxTime: new Date(Date.parse(new Date()) + 60 * 1000 * 120).getHours() + ':00:00',
+		slotDuration: 10 * 60, // in seconds
 		slotLabelFormat: function (a) {
 			return a.toLocaleTimeString([], { timeStyle: 'short' });
 		},
@@ -20,19 +21,34 @@
 			{
 				start: new Date(),
 				end: new Date(Date.parse(new Date()) + 60 * 1000 * 30),
-				title: 'Mierdón'
+				title: 'Mierdón',
+				color: '#234667'
 			}
 		],
 
-		view: 'timeGridWeek'
+		view: 'timeGridWeek',
+		headerToolbar: {
+			start: 'prev,next today',
+			center: 'title',
+			end: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek'
+		},
+		titleFormat: function (t) {
+			return 'Spotify Calendar';
+		},
+		selectable: true,
+		views: {
+			timeGridWeek: { pointer: true },
+			resourceTimeGridWeek: { pointer: true }
+		}
 	};
-
-	function updateZoom() {
-		options.slotDuration += offsetZoom;
-	}
 </script>
 
 <main class="m-10">
 	<Calendar {plugins} {options} />
-	<input on:mousewheel={updateZoom()} type="range" bind:value={offsetZoom} min={0} max={100} />
 </main>
+
+<style>
+	.lol {
+		background-color: #123456;
+	}
+</style>
