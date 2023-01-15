@@ -4,6 +4,35 @@
 	import DayGrid from '@event-calendar/day-grid';
 	import ListWeek from '@event-calendar/list';
 	import Interaction from '@event-calendar/interaction';
+	import { token, tokenExpired } from '../stores';
+	import { onMount } from 'svelte';
+
+	let tracks;
+	async function getInfo() {
+		const accessToken = $token;
+		const url = new URL('https://api.spotify.com/v1/me/player/recently-played');
+		const params = new URLSearchParams({
+			before: new Date().getMilliseconds()
+		});
+		if (accessToken) {
+			const res = await fetch(url, {
+				headers: {
+					Authorization: 'Bearer ' + accessToken
+				}
+			});
+			if (res.ok) {
+				let data = await res.json();
+				tracks = data.items;
+				console.log(tracks);
+			} else {
+				tokenExpired.set(true);
+			}
+		}
+		if (tracks == undefined) {
+			window.location.href = '/login';
+		}
+	}
+	onMount(getInfo);
 
 	function onKeyDown(e) {
 		switch (e.key) {
@@ -19,8 +48,6 @@
 			case 'l':
 				options.view = 'listDay';
 				break;
-			case 't':
-				options.view = 'today';
 
 			default:
 				options.view = options.view;
@@ -60,11 +87,17 @@
 		},
 		dayMaxEvents: true,
 		nowIndicator: true,
-		selectable: true
+		longPressDelay: 200
 	};
 </script>
 
-<svelte:window on:keydown|preventDefault={onKeyDown} />
+<svelte:window on:keydown={onKeyDown} />
 <main class="m-3 lg:m-10">
 	<Calendar {plugins} {options} />
+
+	{#if tracks != undefined}
+		{#each tracks as item}
+			<p>{item.track.name}</p>
+		{/each}
+	{/if}
 </main>
