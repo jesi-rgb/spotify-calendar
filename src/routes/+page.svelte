@@ -2,53 +2,69 @@
 	import Calendar from '@event-calendar/core';
 	import TimeGrid from '@event-calendar/time-grid';
 	import DayGrid from '@event-calendar/day-grid';
-	import listWeek from '@event-calendar/list';
+	import ListWeek from '@event-calendar/list';
+	import Interaction from '@event-calendar/interaction';
 
-	let offsetZoom = 0;
+	function onKeyDown(e) {
+		switch (e.key) {
+			case 'm':
+				options.view = 'dayGridMonth';
+				break;
+			case 'w':
+				options.view = 'timeGridWeek';
+				break;
+			case 'd':
+				options.view = 'timeGridDay';
+				break;
+			case 'l':
+				options.view = 'listDay';
+				break;
+			case 't':
+				options.view = 'today';
 
-	let plugins = [TimeGrid, DayGrid, listWeek];
+			default:
+				options.view = options.view;
+		}
+	}
+
+	let plugins = [TimeGrid, DayGrid, ListWeek, Interaction];
 	let options = {
 		allDaySlot: false,
-
-		height: '800px',
-		slotMinTime: new Date(Date.parse(new Date()) - 60 * 1000 * 60).getHours() + ':00:00',
-		// slotMaxTime: new Date(Date.parse(new Date()) + 60 * 1000 * 120).getHours() + ':00:00',
-		slotDuration: 10 * 60, // in seconds
-		slotLabelFormat: function (a) {
-			return a.toLocaleTimeString([], { timeStyle: 'short' });
+		view: 'timeGridDay',
+		height: '650px',
+		headerToolbar: {
+			start: 'prev,next today',
+			center: '',
+			end: 'title'
 		},
+		slotDuration: 10 * 60,
+		scrollTime: new Date(),
+		displayEventEnd: true,
 		events: [
 			{
 				start: new Date(),
 				end: new Date(Date.parse(new Date()) + 60 * 1000 * 30),
 				title: 'Mierdón',
 				color: '#234667'
+			},
+			{
+				start: new Date(Date.parse(new Date()) + 60 * 1000 * 40),
+				end: new Date(Date.parse(new Date()) + 60 * 1000 * 90),
+				title: 'Mierdón',
+				color: '#234667'
 			}
 		],
-
-		view: 'timeGridWeek',
-		headerToolbar: {
-			start: 'prev,next today',
-			center: 'title',
-			end: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek'
-		},
-		titleFormat: function (t) {
-			return 'Spotify Calendar';
-		},
-		selectable: true,
 		views: {
 			timeGridWeek: { pointer: true },
 			resourceTimeGridWeek: { pointer: true }
-		}
+		},
+		dayMaxEvents: true,
+		nowIndicator: true,
+		selectable: true
 	};
 </script>
 
-<main class="m-10">
+<svelte:window on:keydown|preventDefault={onKeyDown} />
+<main class="m-3 lg:m-10">
 	<Calendar {plugins} {options} />
 </main>
-
-<style>
-	.lol {
-		background-color: #123456;
-	}
-</style>
