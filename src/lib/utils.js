@@ -83,3 +83,56 @@ export function generateRandomString(length) {
 	}
 	return text;
 }
+
+function shapeData(tracks) {
+	if (tracks == undefined) return [];
+
+	let events = tracks.map((t) => {
+		let hour = new Date(t.played_at);
+		let title = t.track.name;
+		let artist = t.track.artists.map((a) => a.name).join(', ');
+
+		let trackDuration = t.track.duration_ms;
+		let trackLink = t.track.external_urls.spotify;
+
+		return {
+			start: hour,
+			title: title,
+			artists: artist,
+			trackDuration: trackDuration,
+			trackLink: trackLink
+		};
+	});
+
+	return events;
+}
+
+export function eventsFromTracks(tracks) {
+	if (tracks == undefined || tracks.length == 0) return [];
+
+	let shapedData = shapeData(tracks).reverse();
+
+	let events = [];
+	for (let i = 0; i < shapedData.length - 1; i++) {
+		const d = shapedData[i];
+		const currentSongStart = d.start;
+		const supposedEnd = new Date(Date.parse(currentSongStart) + d.trackDuration);
+		// const supposedEnd = new Date(Date.parse(currentSongStart) + 30 * 1000);
+
+		const nextSongStart = shapedData[i + 1].start;
+		const supposedPrematureEnd = new Date(
+			Date.parse(currentSongStart) + (Date.parse(nextSongStart) - Date.parse(currentSongStart))
+		);
+
+		let definitiveEnd = supposedPrematureEnd < supposedEnd ? supposedPrematureEnd : supposedEnd;
+
+		events.push({
+			start: currentSongStart,
+			end: definitiveEnd,
+			title: d.title,
+			color: '#123456'
+		});
+	}
+
+	return events;
+}
