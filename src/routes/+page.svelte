@@ -68,7 +68,7 @@
 			center: '',
 			end: 'title'
 		},
-		slotDuration: 0.5 * 60,
+		slotDuration: 1 * 60,
 		scrollTime: eventsFromTracks(tracks)[0].start,
 		displayEventEnd: true,
 		events: eventsFromTracks(tracks),
