@@ -4,7 +4,8 @@ module.exports = {
 	theme: {
 		extend: {
 			fontFamily: {
-				body: ['IBM Plex Sans', 'serif']
+				body: ['IBM Plex Sans', 'serif'],
+				mona: ['Mona Sans']
 			}
 		}
 	},

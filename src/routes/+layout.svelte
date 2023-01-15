@@ -2,6 +2,12 @@
 	import '../app.css';
 </script>
 
-<main class="font-body mx-auto max-w-sm xl:max-w-xl 2xl:max-w-8xl my-10">
+<main class="font-mona font-medium tabular-nums">
 	<slot />
 </main>
+
+<style>
+	main {
+		font-variation-settings: 'wdth' 85;
+	}
+</style>

@@ -1,34 +1,38 @@
 <script>
 	import Calendar from '@event-calendar/core';
 	import TimeGrid from '@event-calendar/time-grid';
+	import DayGrid from '@event-calendar/day-grid';
+	import listWeek from '@event-calendar/list';
 
-	let plugins = [TimeGrid];
+	let offsetZoom = 0;
+
+	let plugins = [TimeGrid, DayGrid, listWeek];
 	let options = {
 		allDaySlot: false,
-		view: 'timeGridWeek',
-		pointer: true,
-		editable: true,
-		eventDurationEditable: true,
-		nowIndicator: true,
-		eventMouseEnter: function (info) {
-			console.log(info);
+
+		slotMinTime: new Date(Date.parse(new Date()) - 60 * 1000 * 60).getHours() + ':00:00',
+		slotMaxTime: new Date(Date.parse(new Date()) + 60 * 1000 * 120).getHours() + ':00:00',
+		slotDuration: 8 * 60, // in seconds
+		slotLabelFormat: function (a) {
+			return a.toLocaleTimeString([], { timeStyle: 'short' });
 		},
-		// slotMinTime: new Date(Date.parse(new Date()) - 60 * 1000 * 50),
-		// slotMaxTime: new Date(Date.parse(new Date()) + 60 * 1000 * 50),
-		// slotDuration: '00:10',
 		events: [
-			// your list of events
 			{
 				start: new Date(),
 				end: new Date(Date.parse(new Date()) + 60 * 1000 * 30),
 				title: 'Mierdón'
 			}
-		]
+		],
+
+		view: 'timeGridWeek'
 	};
-	function updateOptions() {
-		options.slotDuration = '00:10';
+
+	function updateZoom() {
+		options.slotDuration += offsetZoom;
 	}
 </script>
 
-<button on:click={updateOptions}>Change slot duration</button>
-<Calendar {plugins} {options} />
+<main class="m-10">
+	<Calendar {plugins} {options} />
+	<input on:mousewheel={updateZoom()} type="range" bind:value={offsetZoom} min={0} max={100} />
+</main>
