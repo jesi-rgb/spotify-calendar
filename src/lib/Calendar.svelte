@@ -9,7 +9,7 @@
 	import { eventsFromTracks } from '../lib/utils';
 	import { onMount } from 'svelte';
 
-	$: options = {
+	let options = {
 		allDaySlot: false,
 		view: 'timeGridDay',
 		height: '650px',
@@ -19,7 +19,6 @@
 			end: 'title'
 		},
 		slotDuration: 1 * 60,
-		// scrollTime: eventsFromTracks(data)[0].start,
 		displayEventEnd: true,
 		views: {
 			timeGridWeek: { pointer: true },
@@ -47,6 +46,7 @@
 			if (res.ok) {
 				data = await res.json();
 				options.events = eventsFromTracks(data.items);
+				options.scrollTime = new Date();
 			} else {
 				console.log('mierdón');
 				tokenExpired.set(true);
