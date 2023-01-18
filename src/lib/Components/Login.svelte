@@ -1,9 +1,8 @@
 <script>
 	const client_id = import.meta.env.VITE_SPOTIFY_CLIENT_ID;
-	const client_secret = import.meta.env.VITE_SPOTIFY_CLIENT_SECRET;
 
-	import { token, tokenExpired, appUrl } from '../stores';
-	import { generateRandomString } from './utils';
+	import { token, tokenExpired, appUrl } from '../../stores';
+	import { generateRandomString } from '../utils';
 
 	const url = new URL('https://accounts.spotify.com/authorize?');
 	const scope = 'user-read-private user-read-recently-played user-read-email user-top-read';

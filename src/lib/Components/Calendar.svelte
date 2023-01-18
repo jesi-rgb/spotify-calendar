@@ -4,9 +4,9 @@
 	import DayGrid from '@event-calendar/day-grid';
 	import ListWeek from '@event-calendar/list';
 	import Interaction from '@event-calendar/interaction';
-	import { token, tokenExpired } from '../stores';
+	import { token, tokenExpired } from '../../stores';
 
-	import { eventsFromTracks } from '../lib/utils';
+	import { eventsFromTracks } from '../utils';
 	import { onMount } from 'svelte';
 
 	let options = {
