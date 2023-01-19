@@ -131,7 +131,9 @@ export function eventsFromTracks(tracks) {
 			start: currentSongStart,
 			end: definitiveEnd,
 			title: d.title,
-			color: '#123456'
+			color: '#123456',
+			duration: d.trackDuration,
+			artists: d.artists
 		});
 	}
 
@@ -146,4 +148,30 @@ export function dateFromHour(timeHours) {
 	date.setHours(hours);
 	date.setMinutes(minutes);
 	return date;
+}
+
+import { token, tokenExpired } from '../stores';
+
+export async function getInfo() {
+	const accessToken = token;
+	let data;
+	const url = new URL('https://api.spotify.com/v1/me/player/recently-played');
+	// const params = new URLSearchParams({
+	// 	before: new Date().getMilliseconds()
+	// });
+	if (accessToken) {
+		const res = await fetch(url, {
+			headers: {
+				Authorization: 'Bearer ' + accessToken
+			}
+		});
+		if (res.ok) {
+			data = await res.json();
+			data = eventsFromTracks(data.items);
+		} else {
+			console.log('mierdón');
+			tokenExpired.set(true);
+		}
+	}
+	return data;
 }

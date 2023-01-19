@@ -5,21 +5,20 @@
 	import { select, selectAll } from 'd3-selection';
 	import { zoom } from 'd3-zoom';
 	import { dateFromHour, eventsFromTracks } from '../utils';
+	import { tracks } from '../../items';
 
 	export let timeResolution = 10;
 	export let my = 20;
-	export let mx = 60;
+	export let mx = 80;
 
 	let pinComponent;
 	let pinYAxis;
-	let pinGLines;
-	let pinGRects;
 
 	let svg_height = 1000;
 	let svg_width = 600;
 
 	$: height = svg_height - my * 2;
-	$: width = svg_width - mx * 3;
+	$: width = svg_width - mx;
 
 	$: y = scaleTime()
 		.domain([new Date().setHours(10), new Date().setHours(19)])
@@ -30,17 +29,19 @@
 
 	$: lineCoords = y.ticks(timeResolution).map((t) => {
 		let x1 = mx,
-			x2 = width - mx;
-		let y1 = y(t),
-			y2 = y(t);
+			x2 = width;
+		let y1 = y(t) + my,
+			y2 = y(t) + my;
 		return { x1: x1, y1: y1, x2: x2, y2: y2 };
 	});
 
 	let events = [
 		{ start: dateFromHour('17:00'), end: dateFromHour('17:03'), title: 'balls' },
 		{ start: dateFromHour('17:03'), end: dateFromHour('17:06'), title: 'damn' },
-		{ start: dateFromHour('12:00'), end: dateFromHour('12:23'), title: 'bruh' }
+		{ start: dateFromHour('12:00'), end: dateFromHour('12:23'), title: 'amar a rosanita' }
 	];
+	events = eventsFromTracks(tracks);
+	console.log(events);
 
 	const zoomBehaviour = zoom().scaleExtent([0.02, 60]).filter(filter).on('zoom', zoomed);
 
@@ -53,19 +54,13 @@
 
 		lineCoords = transformedY.ticks(10).map((t) => {
 			let x1 = mx,
-				x2 = width - mx;
-			let y1 = transformedY(t),
-				y2 = transformedY(t);
+				x2 = width;
+			let y1 = transformedY(t) + my,
+				y2 = transformedY(t) + my;
 			return { x1: x1, y1: y1, x2: x2, y2: y2 };
 		});
 
 		select(pinYAxis).call(yAxis.scale(transformedY));
-		// update lines
-		selectAll('.lines')
-			.attr('x1', (d) => 0)
-			.attr('y1', (d) => transformedY(d))
-			.attr('x2', (d) => width - mx)
-			.attr('y2', (d) => transformedY(d));
 
 		selectAll('.event')
 			.data(events)
@@ -77,11 +72,10 @@
 				let endCoord = transformedY(d.end);
 				return endCoord - startCoord;
 			});
-
-		selectAll('.clip-rect')
+		selectAll('.event-shadow')
 			.data(events)
-			.attr('x', (d) => mx)
-			.attr('y', (d) => transformedY(d.start))
+			.attr('x', (d) => mx + 4)
+			.attr('y', (d) => transformedY(d.start) + 4)
 			.attr('width', (d) => width - mx)
 			.attr('height', (d) => {
 				let startCoord = transformedY(d.start);
@@ -89,7 +83,23 @@
 				return endCoord - startCoord;
 			});
 
+		selectAll('.clip-rect')
+			.data(events)
+			.attr('x', (d) => mx)
+			.attr('y', (d) => transformedY(d.start))
+			.attr('width', (d) => width)
+			.attr('height', (d) => {
+				let startCoord = transformedY(d.start);
+				let endCoord = transformedY(d.end);
+				return endCoord - startCoord;
+			});
+
 		selectAll('.event-title')
+			.data(events)
+			.attr('x', (d) => mx)
+			.attr('y', (d) => transformedY(d.start));
+
+		selectAll('.event-secondary')
 			.data(events)
 			.attr('x', (d) => mx)
 			.attr('y', (d) => transformedY(d.start));
@@ -105,16 +115,18 @@
 
 <svg width={svg_width} height={svg_height} bind:this={pinComponent} class="m-4">
 	<g class="yAxis font-mona text-lg" transform="translate({mx},{my})" bind:this={pinYAxis} />
-	<g class="lines" bind:this={pinGLines}>
+	<g>
 		{#each lineCoords as coord}
 			<line
+				class="dashed-lines"
 				x1={coord.x1}
 				x2={coord.x2}
-				y1={coord.y1 + my}
-				y2={coord.y2 + my}
-				stroke="blue"
+				y1={coord.y1}
+				y2={coord.y2}
+				stroke="steelblue"
 				stroke-dasharray="10 10"
-				opacity=".3"
+				stroke-width="1.5"
+				opacity=".5"
 			/>
 		{/each}
 	</g>
@@ -135,8 +147,17 @@
 		{/each}
 	</defs>
 
-	<g class="events" bind:this={pinGRects}>
+	<g class="events">
 		{#each events as event, i}
+			<rect
+				class="event-shadow"
+				x={mx + 4}
+				y={y(event.start) + 4}
+				width={width - mx}
+				height={y(event.end) - y(event.start)}
+				fill="lightblue"
+				opacity=".6"
+			/>
 			<rect
 				class="event"
 				x={mx}
@@ -144,21 +165,42 @@
 				width={width - mx}
 				height={y(event.end) - y(event.start)}
 				fill="steelblue"
+				stroke="darkblue"
 			/>
 			<text
 				id={'label-' + i}
 				dominant-baseline="hanging"
-				class="event-title"
+				class="event-title font-semibold text-xl"
 				x={mx}
 				y={y(event.start)}
-				dx="6"
-				fill="PINK"
-				dy="4"
+				dx="10"
+				fill="white"
+				dy="10"
 				mask={'url(#clip-rect-' + i}
-				>{event.title}
+				>{event.title} · {event.artists}
+			</text>
+			<text
+				id={'label-secondary-' + i}
+				dominant-baseline="hanging"
+				class="event-secondary text-lg"
+				x={mx}
+				y={y(event.start)}
+				dx="10"
+				fill="white"
+				dy="35"
+				opacity=".7"
+				mask={'url(#clip-rect-' + i}
+				>{new Date(event.duration).getMinutes()} minutes, {new Date(event.duration).getSeconds()} seconds
 			</text>
 		{/each}
 	</g>
 </svg>
 
-<!-- clip-path={'url(#clip-rect-' + i + ')'} -->
+<style>
+	.event-title {
+		font-variation-settings: 'wdth' 125;
+	}
+	.yAxis {
+		font-variation-settings: 'wdth' 75;
+	}
+</style>
