@@ -10,6 +10,7 @@
 	export let my = 20;
 	export let mx = 60;
 
+	let pinComponent;
 	let pinYAxis;
 	let pinGLines;
 	let pinGRects;
@@ -41,7 +42,7 @@
 		{ start: dateFromHour('12:00'), end: dateFromHour('12:23'), title: 'bruh' }
 	];
 
-	const zoomBehaviour = zoom().scaleExtent([0.2, 60]).filter(filter).on('zoom', zoomed);
+	const zoomBehaviour = zoom().scaleExtent([0.02, 60]).filter(filter).on('zoom', zoomed);
 
 	function filter(event) {
 		return (!event.ctrlKey || event.type === 'wheel') && !event.button;
@@ -94,12 +95,15 @@
 			.attr('y', (d) => transformedY(d.start));
 	}
 
+	$: if (pinComponent) {
+		select(pinComponent).call(zoomBehaviour.on('zoom', zoomed));
+	}
 	$: if (pinYAxis) {
-		select(pinYAxis).call(yAxis).call(zoomBehaviour.on('zoom', zoomed));
+		select(pinYAxis).call(yAxis);
 	}
 </script>
 
-<svg width={svg_width} height={svg_height} class="m-4">
+<svg width={svg_width} height={svg_height} bind:this={pinComponent} class="m-4">
 	<g class="yAxis font-mona text-lg" transform="translate({mx},{my})" bind:this={pinYAxis} />
 	<g class="lines" bind:this={pinGLines}>
 		{#each lineCoords as coord}
