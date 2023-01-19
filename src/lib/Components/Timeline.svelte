@@ -148,7 +148,7 @@
 				x={mx}
 				y={y(event.start)}
 				dx="6"
-				fill="lightgreen"
+				fill="PINK"
 				dy="4"
 				mask={'url(#clip-rect-' + i}
 				>{event.title}
