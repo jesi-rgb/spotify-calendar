@@ -19,7 +19,7 @@
 	import { onMount } from 'svelte';
 
 	//  external variables
-	export let timeResolution = 10;
+	export let timeResolution = 20;
 	export let my = 20;
 	export let mx = 80;
 	export let events = eventsFromTracks(tracks);
@@ -30,23 +30,25 @@
 	}
 
 	function reset() {
-		select(pinComponent).transition().duration(1000).call(zoomBehaviour.transform, zoomIdentity);
+		console.log('resetting');
+		select(svgRef).transition().duration(1000).call(zoomBehaviour.transform, zoomIdentity);
 	}
 
-	function clicked(event, [x, y]) {
-		console.log(event);
+	function focusOnEvent(i) {
+		const coord = y(events[i].start);
+		console.log(coord);
 
-		event.stopPropagation();
-		select(pinComponent)
+		// event.stopPropagation();
+		reset();
+		select(svgRef)
 			.transition()
-			.duration(750)
+			.duration(800)
 			.call(
 				zoomBehaviour.transform,
 				zoomIdentity
 					.translate(width / 2, height / 2)
-					.scale(40)
-					.translate(-x, -y),
-				pointer(event)
+					.scale(20)
+					.translate(-mx, -coord)
 			);
 	}
 
@@ -64,7 +66,7 @@
 			return { x1: x1, y1: y1, x2: x2, y2: y2 };
 		});
 
-		select(pinYAxis).call(yAxis.scale(transformedY));
+		select(yAxisRef).call(yAxis.scale(transformedY));
 
 		selectAll('.event')
 			.data(events)
@@ -105,21 +107,21 @@
 	}
 
 	//  define lots of things
-	let pinComponent;
-	let pinYAxis;
-	let pinEvents;
+	let svgRef;
+	let yAxisRef;
+	let eventsRef;
 
 	let svg_height = 1000;
 	let svg_width = 600;
 
 	const zoomBehaviour = zoom()
-		.interpolate(interpolateZoom.rho(0.1))
+		.interpolate(interpolateZoom.rho(0.5))
 		.scaleExtent([0.02, 80])
-		.filter(filter)
+		// .filter(filter)
 		.on('zoom', zoomed);
 
 	let now = new Date();
-	let currentZoom = zoomTransform(select(pinComponent));
+	let currentZoom = zoomTransform(select(svgRef));
 
 	// define reactive things
 
@@ -143,15 +145,14 @@
 
 	$: nowCoords = currentZoom.rescaleY(y)(now);
 
-	$: if (pinComponent) {
-		select(pinComponent).call(zoomBehaviour.on('zoom', zoomed));
+	$: if (svgRef) {
+		select(svgRef).call(zoomBehaviour.on('zoom', zoomed));
 	}
-	$: if (pinYAxis) {
-		select(pinYAxis).call(yAxis);
+	$: if (yAxisRef) {
+		select(yAxisRef).call(yAxis);
 	}
-	$: if (pinEvents) {
-		console.log('mierdon');
-		selectAll('.event').on('click', clicked);
+	$: if (eventsRef) {
+		console.log(selectAll('.event'));
 	}
 
 	onMount(() => {
@@ -165,12 +166,8 @@
 	});
 </script>
 
-<button on:click={() => reset()} class="bg-gray-300 rounded-sm px-2 py-1 ring ring-black m-4"
-	>Reset</button
->
-
-<svg width={svg_width} height={svg_height} bind:this={pinComponent} class="m-4">
-	<g class="yAxis font-mona text-lg" transform="translate({mx},{my})" bind:this={pinYAxis} />
+<svg width={svg_width} height={svg_height} bind:this={svgRef} class="m-4">
+	<g class="yAxis font-mona text-lg" transform="translate({mx},{my})" bind:this={yAxisRef} />
 	<g>
 		{#each lineCoords as coord}
 			<line
@@ -203,10 +200,12 @@
 		{/each}
 	</defs>
 
-	<g bind:this={pinEvents} class="events">
+	<g bind:this={eventsRef} class="events">
 		{#each events as event, i}
 			<g class="group hover:cursor-pointer">
+				<!-- svelte-ignore a11y-click-events-have-key-events -->
 				<rect
+					on:click={() => focusOnEvent(i)}
 					id={'event-' + i}
 					class="event hover:fill-lime-300"
 					x={mx}
@@ -231,7 +230,7 @@
 				<text
 					id={'label-artist-' + i}
 					dominant-baseline="hanging"
-					class="label-artists font-light text-xl italic pointer-events-none group-hover:fill-lime-800"
+					class="label-artists font-light text-xl pointer-events-none group-hover:fill-lime-800"
 					x={mx}
 					y={y(event.start)}
 					dx="10"
@@ -258,18 +257,27 @@
 
 		<circle cx={mx} cy={nowCoords} r="3" fill="red" />
 		<line x1={mx} y1={nowCoords} x2={width} y2={nowCoords} stroke-dasharray="5 10" stroke="red" />
+		<line x1={mx} y1={my} x2={width} y2={my} stroke-dasharray="5 10" stroke="blue" />
 		<text x={width} y={nowCoords} text-anchor="end" class="text-xs" dy="-2" fill="red"
 			>{now.toLocaleTimeString()}</text
 		>
 	</g>
 </svg>
 
+<button
+	on:click={() => focusOnEvent(1)}
+	class="bg-gray-300 rounded-sm px-2 py-1 ring ring-black m-4">Focus</button
+>
+<button on:click={() => reset()} class="bg-gray-300 rounded-sm px-2 py-1 ring ring-black m-4"
+	>Reset</button
+>
+
 <style>
 	:root {
-		--shadow-color: rgba(71, 138, 255, 0.48);
+		--shadow-color: #072741;
 	}
 	.event {
-		-webkit-filter: drop-shadow(3px 3px 2px var(--shadow-color));
+		-webkit-filter: drop-shadow(3px 3px 0px var(--shadow-color));
 		filter: drop-shadow(3px 3px 0px var(--shadow-color));
 		/* Similar syntax to box-shadow */
 	}
