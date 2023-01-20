@@ -238,9 +238,16 @@
 			</g>
 		{/each}
 
-		<circle cx={mx} cy={nowCoords} r="3" fill="red" />
-		<line x1={mx} y1={nowCoords} x2={width} y2={nowCoords} stroke-dasharray="5 10" stroke="red" />
-		<text x={width} y={nowCoords} text-anchor="end" class="text-xs" dy="-2" fill="red"
+		<circle cx={mx} cy={nowCoords} r="3" class="fill-purple-800" />
+		<line
+			x1={mx}
+			y1={nowCoords}
+			x2={width}
+			y2={nowCoords}
+			stroke-dasharray="5 10"
+			class="stroke-purple-800"
+		/>
+		<text x={width} y={nowCoords} text-anchor="end" class="text-xs fill-purple-800" dy="-2"
 			>{now.toLocaleTimeString()}</text
 		>
 	</g>
