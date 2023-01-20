@@ -1,5 +1,6 @@
 <script>
 	import { scaleTime } from 'd3-scale';
+	import { interpolate, interpolateZoom, zoomIdentity, transition, easeLinear } from 'd3';
 
 	import { axisLeft } from 'd3-axis';
 	import { select, selectAll } from 'd3-selection';
@@ -158,40 +159,42 @@
 				fill="lightblue"
 				opacity=".6"
 			/>
-			<rect
-				class="event"
-				x={mx}
-				y={y(event.start)}
-				width={width - mx}
-				height={y(event.end) - y(event.start)}
-				fill="steelblue"
-				stroke="darkblue"
-			/>
-			<text
-				id={'label-' + i}
-				dominant-baseline="hanging"
-				class="event-title font-semibold text-xl"
-				x={mx}
-				y={y(event.start)}
-				dx="10"
-				fill="white"
-				dy="10"
-				mask={'url(#clip-rect-' + i}
-				>{event.title} · {event.artists}
-			</text>
-			<text
-				id={'label-secondary-' + i}
-				dominant-baseline="hanging"
-				class="event-secondary text-lg"
-				x={mx}
-				y={y(event.start)}
-				dx="10"
-				fill="white"
-				dy="35"
-				opacity=".7"
-				mask={'url(#clip-rect-' + i}
-				>{new Date(event.duration).getMinutes()} minutes, {new Date(event.duration).getSeconds()} seconds
-			</text>
+			<g class="group hover:cursor-pointer">
+				<rect
+					class="event hover:fill-lime-300"
+					x={mx}
+					y={y(event.start)}
+					width={width - mx}
+					height={y(event.end) - y(event.start)}
+					fill="steelblue"
+					stroke="darkblue"
+				/>
+				<text
+					id={'label-' + i}
+					dominant-baseline="hanging"
+					class="event-title font-semibold text-xl pointer-events-none group-hover:fill-lime-800"
+					x={mx}
+					y={y(event.start)}
+					dx="10"
+					fill="white"
+					dy="10"
+					mask={'url(#clip-rect-' + i}
+					>{event.title} · {event.artists}
+				</text>
+				<text
+					id={'label-secondary-' + i}
+					dominant-baseline="hanging"
+					class="event-secondary text-lg pointer-events-none group-hover:fill-lime-700"
+					x={mx}
+					y={y(event.start)}
+					dx="10"
+					fill="white"
+					dy="35"
+					opacity=".7"
+					mask={'url(#clip-rect-' + i}
+					>{new Date(event.duration).getMinutes()} minutes, {new Date(event.duration).getSeconds()} seconds
+				</text>
+			</g>
 		{/each}
 	</g>
 </svg>
