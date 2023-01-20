@@ -16,7 +16,7 @@ export const token = readable(null, function start(set) {
 
 export const appUrl = readable(null, function start(set) {
 	set('https://spotify-calendar.vercel.app/');
-	set('http://localhost:5173');
+	// set('http://localhost:5173');
 });
 
 export const tokenExpired = writable(false);
