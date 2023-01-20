@@ -1,25 +1,16 @@
 <script>
 	import { scaleTime } from 'd3-scale';
-	import {
-		interpolate,
-		pointer,
-		interpolateZoom,
-		zoomIdentity,
-		zoomTransform,
-		transition,
-		easeLinear,
-		least
-	} from 'd3';
+	import { interpolateZoom, zoomIdentity, zoomTransform } from 'd3';
 
 	import { axisLeft } from 'd3-axis';
 	import { select, selectAll } from 'd3-selection';
-	import { zoom, ZoomTransform } from 'd3-zoom';
-	import { dateFromHour, eventsFromTracks } from '../utils';
+	import { zoom } from 'd3-zoom';
+	import { eventsFromTracks } from '../utils';
 	import { tracks } from '../../items';
 	import { onMount } from 'svelte';
 
 	//  external variables
-	export let timeResolution = 20;
+	export let timeResolution = 10;
 	export let my = 20;
 	export let mx = 80;
 	export let events = eventsFromTracks(tracks);
@@ -30,15 +21,12 @@
 	}
 
 	function reset() {
-		console.log('resetting');
 		select(svgRef).transition().duration(1000).call(zoomBehaviour.transform, zoomIdentity);
 	}
 
 	function focusOnEvent(i) {
 		const coord = y(events[i].start);
-		console.log(coord);
 
-		// event.stopPropagation();
 		reset();
 		select(svgRef)
 			.transition()
@@ -117,7 +105,7 @@
 	const zoomBehaviour = zoom()
 		.interpolate(interpolateZoom.rho(0.5))
 		.scaleExtent([0.02, 80])
-		// .filter(filter)
+		.filter(filter)
 		.on('zoom', zoomed);
 
 	let now = new Date();
@@ -129,7 +117,7 @@
 	$: width = svg_width - mx;
 
 	$: y = scaleTime()
-		.domain([new Date().setHours(10), new Date().setHours(19)])
+		.domain([new Date().setHours(new Date().getHours() - 3), new Date()])
 		.range([0, height - my])
 		.nice();
 
@@ -150,9 +138,6 @@
 	}
 	$: if (yAxisRef) {
 		select(yAxisRef).call(yAxis);
-	}
-	$: if (eventsRef) {
-		console.log(selectAll('.event'));
 	}
 
 	onMount(() => {
@@ -207,18 +192,16 @@
 				<rect
 					on:click={() => focusOnEvent(i)}
 					id={'event-' + i}
-					class="event hover:fill-lime-300"
+					class="event hover:fill-lime-300 fill-purple-500 stroke-2 stroke-purple-900"
 					x={mx}
 					y={y(event.start)}
 					width={width - mx}
 					height={y(event.end) - y(event.start)}
-					fill="steelblue"
-					stroke="darkblue"
 				/>
 				<text
 					id={'label-' + i}
 					dominant-baseline="hanging"
-					class="label-title font-semibold text-xl pointer-events-none group-hover:fill-lime-800"
+					class="label-title font-widest font-bold text-2xl pointer-events-none group-hover:fill-lime-800"
 					x={mx}
 					y={y(event.start)}
 					dx="10"
@@ -230,19 +213,19 @@
 				<text
 					id={'label-artist-' + i}
 					dominant-baseline="hanging"
-					class="label-artists font-light text-xl pointer-events-none group-hover:fill-lime-800"
+					class="label-artists font-narrower text-xl pointer-events-none group-hover:fill-lime-800"
 					x={mx}
 					y={y(event.start)}
 					dx="10"
 					fill="white"
-					dy="35"
+					dy="40"
 					mask={'url(#clip-rect-' + i}
 					>{event.artists}
 				</text>
 				<text
 					id={'label-secondary-' + i}
 					dominant-baseline="hanging"
-					class="label-secondary text-lg pointer-events-none group-hover:fill-lime-700"
+					class="label-secondary font-light font-narrower text-lg pointer-events-none group-hover:fill-lime-700"
 					x={mx}
 					y={y(event.start)}
 					dx="10"
@@ -257,7 +240,6 @@
 
 		<circle cx={mx} cy={nowCoords} r="3" fill="red" />
 		<line x1={mx} y1={nowCoords} x2={width} y2={nowCoords} stroke-dasharray="5 10" stroke="red" />
-		<line x1={mx} y1={my} x2={width} y2={my} stroke-dasharray="5 10" stroke="blue" />
 		<text x={width} y={nowCoords} text-anchor="end" class="text-xs" dy="-2" fill="red"
 			>{now.toLocaleTimeString()}</text
 		>
@@ -265,29 +247,25 @@
 </svg>
 
 <button
-	on:click={() => focusOnEvent(1)}
-	class="bg-gray-300 rounded-sm px-2 py-1 ring ring-black m-4">Focus</button
+	on:click={() => focusOnEvent(0)}
+	class="bg-gray-300 rounded-sm px-2 py-1 ring ring-black m-4">Oldest song</button
 >
 <button on:click={() => reset()} class="bg-gray-300 rounded-sm px-2 py-1 ring ring-black m-4"
-	>Reset</button
+	>Now</button
 >
 
 <style>
 	:root {
-		--shadow-color: #072741;
+		--shadow-color: #310b56;
+		--selected-shadow-color: #354c0c;
 	}
 	.event {
 		-webkit-filter: drop-shadow(3px 3px 0px var(--shadow-color));
 		filter: drop-shadow(3px 3px 0px var(--shadow-color));
 		/* Similar syntax to box-shadow */
 	}
-	.label-title {
-		font-variation-settings: 'wdth' 125;
-	}
-	.label-artists {
-		font-variation-settings: 'wdth' 75;
-	}
-	.yAxis {
-		font-variation-settings: 'wdth' 75;
+	.event:hover {
+		-webkit-filter: drop-shadow(3px 3px 0px var(--selected-shadow-color));
+		filter: drop-shadow(3px 3px 0px var(--selected-shadow-color));
 	}
 </style>

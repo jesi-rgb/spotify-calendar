@@ -2,6 +2,21 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer utilities {
+	.font-narrowest {
+		font-variation-settings: 'wdth' 75;
+	}
+	.font-narrower {
+		font-variation-settings: 'wdth' 90;
+	}
+	.font-wider {
+		font-variation-settings: 'wdth' 115;
+	}
+	.font-widest {
+		font-variation-settings: 'wdth' 125;
+	}
+}
+
 @font-face {
 	font-family: 'IBM Plex Sans';
 	src: url('/fonts/IBMPlexSans-Medium.ttf') format('ttf');

@@ -1,8 +1,11 @@
 <script>
+	import { onMount } from 'svelte';
+
 	const client_id = import.meta.env.VITE_SPOTIFY_CLIENT_ID;
 
 	import { token, tokenExpired, appUrl } from '../../stores';
 	import { generateRandomString } from '../utils';
+	import ConnectButton from './ConnectButton.svelte';
 
 	const url = new URL('https://accounts.spotify.com/authorize?');
 	const scope = 'user-read-private user-read-recently-played user-read-email user-top-read';
@@ -14,23 +17,33 @@
 		show_dialog: !rememberMe, // Will show up on first sign-on regardless
 		client_id,
 		scope,
-		redirect_uri: $appUrl,
+		redirect_uri: $appUrl + '/timeline',
 		state
 	});
 	$: loginLink = url + params;
+
+	onMount(() => {
+		if ($token) {
+			window.location.href = $appUrl + '/timeline';
+		}
+	});
 </script>
 
 {#if !$token}
-	<div class="text-center mt-20">
-		<a href={loginLink}>
-			<button class="text-6xl">Connect to Spotify</button>
-		</a>
-		<br />
-		<div class="mt-10">
-			<input id="checkbox-box" name="remember-me" type="checkbox" bind:checked={rememberMe} />
-			<label class="text-2xl" id="checkbox-text" for="remember-me">Remember me?</label>
+	<div class="text-center my-20">
+		<div
+			class="title font-widest font-extrabold mb-5 tracking-tight bg-gradient-to-l from-lime-900 to-lime-300 bg-clip-text text-6xl text-transparent md:text-7xl"
+		>
+			Spotify Calendar
 		</div>
+
+		<div class="text-4xl text-lime-900">A novel way to think about your playlists</div>
 	</div>
+	<p class="max-w-md text-xl mx-auto text-justify leading-tight">
+		Spotify Calendar allows you to see your recently played tracks in a calendar format, similar to
+		events you'd find in your typical day. Just log in and take a look at your busy day!
+	</p>
+	<ConnectButton {loginLink} {rememberMe} />
 {/if}
 
 {#if $tokenExpired}

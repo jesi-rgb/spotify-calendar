@@ -1,8 +1,5 @@
 <script>
-	import Calendar from '../lib/Components/Calendar.svelte';
-	import Timeline from '../lib/Components/Timeline.svelte';
+	import Login from '../lib/Components/Login.svelte';
 </script>
 
-<!-- <Calendar /> -->
-
-<Timeline />
+<Login />
