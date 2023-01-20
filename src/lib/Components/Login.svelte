@@ -32,12 +32,12 @@
 {#if !$token}
 	<div class="text-center my-20">
 		<div
-			class="title font-widest font-extrabold mb-5 tracking-tight bg-gradient-to-l from-lime-900 to-lime-300 bg-clip-text text-6xl text-transparent md:text-7xl"
+			class="title font-widest font-extrabold mb-5 tracking-tight bg-gradient-to-l from-lime-900 to-lime-500 bg-clip-text text-6xl text-transparent md:text-7xl"
 		>
 			Spotify Calendar
 		</div>
 
-		<div class="text-4xl text-lime-900">A novel way to think about your playlists</div>
+		<div class="text-3xl lg:text-4xl text-lime-900">A novel way to think about your playlists</div>
 	</div>
 	<p class="max-w-md text-xl mx-auto text-justify leading-tight">
 		Spotify Calendar allows you to see your recently played tracks in a calendar format, similar to
