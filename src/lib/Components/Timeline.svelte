@@ -2,6 +2,7 @@
 	import { scaleTime } from 'd3-scale';
 	import {
 		interpolate,
+		pointer,
 		interpolateZoom,
 		zoomIdentity,
 		zoomTransform,
@@ -17,47 +18,36 @@
 	import { tracks } from '../../items';
 	import { onMount } from 'svelte';
 
+	//  external variables
 	export let timeResolution = 10;
 	export let my = 20;
 	export let mx = 80;
 	export let events = eventsFromTracks(tracks);
 
-	let pinComponent;
-	let pinYAxis;
-
-	let svg_height = 1000;
-	let svg_width = 600;
-
-	$: height = svg_height - my * 2;
-	$: width = svg_width - mx;
-
-	$: y = scaleTime()
-		.domain([new Date().setHours(10), new Date().setHours(19)])
-		.range([0, height - my])
-		.nice();
-
-	$: yAxis = axisLeft(y).ticks(timeResolution);
-
-	$: lineCoords = y.ticks(timeResolution).map((t) => {
-		let x1 = mx,
-			x2 = width;
-		let y1 = y(t) + my,
-			y2 = y(t) + my;
-		return { x1: x1, y1: y1, x2: x2, y2: y2 };
-	});
-
-	const zoomBehaviour = zoom()
-		.interpolate(interpolateZoom.rho(0.1))
-		.scaleExtent([0.02, 80])
-		.filter(filter)
-		.on('zoom', zoomed);
-
-	let now = new Date();
-	let currentZoom = zoomTransform(select(pinComponent));
-	$: nowCoords = currentZoom.rescaleY(y)(now);
-
+	//  functions
 	function filter(event) {
 		return (!event.ctrlKey || event.type === 'wheel') && !event.button;
+	}
+
+	function reset() {
+		select(pinComponent).transition().duration(1000).call(zoomBehaviour.transform, zoomIdentity);
+	}
+
+	function clicked(event, [x, y]) {
+		console.log(event);
+
+		event.stopPropagation();
+		select(pinComponent)
+			.transition()
+			.duration(750)
+			.call(
+				zoomBehaviour.transform,
+				zoomIdentity
+					.translate(width / 2, height / 2)
+					.scale(40)
+					.translate(-x, -y),
+				pointer(event)
+			);
 	}
 
 	function zoomed({ transform }) {
@@ -114,15 +104,54 @@
 			.attr('y', (d) => transformedY(d.start));
 	}
 
+	//  define lots of things
+	let pinComponent;
+	let pinYAxis;
+	let pinEvents;
+
+	let svg_height = 1000;
+	let svg_width = 600;
+
+	const zoomBehaviour = zoom()
+		.interpolate(interpolateZoom.rho(0.1))
+		.scaleExtent([0.02, 80])
+		.filter(filter)
+		.on('zoom', zoomed);
+
+	let now = new Date();
+	let currentZoom = zoomTransform(select(pinComponent));
+
+	// define reactive things
+
+	$: height = svg_height - my * 2;
+	$: width = svg_width - mx;
+
+	$: y = scaleTime()
+		.domain([new Date().setHours(10), new Date().setHours(19)])
+		.range([0, height - my])
+		.nice();
+
+	$: yAxis = axisLeft(y).ticks(timeResolution);
+
+	$: lineCoords = y.ticks(timeResolution).map((t) => {
+		let x1 = mx,
+			x2 = width;
+		let y1 = y(t) + my,
+			y2 = y(t) + my;
+		return { x1: x1, y1: y1, x2: x2, y2: y2 };
+	});
+
+	$: nowCoords = currentZoom.rescaleY(y)(now);
+
 	$: if (pinComponent) {
 		select(pinComponent).call(zoomBehaviour.on('zoom', zoomed));
 	}
 	$: if (pinYAxis) {
 		select(pinYAxis).call(yAxis);
 	}
-
-	function reset() {
-		select(pinComponent).transition().duration(1000).call(zoomBehaviour.transform, zoomIdentity);
+	$: if (pinEvents) {
+		console.log('mierdon');
+		selectAll('.event').on('click', clicked);
 	}
 
 	onMount(() => {
@@ -151,9 +180,9 @@
 				y1={coord.y1}
 				y2={coord.y2}
 				stroke="steelblue"
-				stroke-dasharray="10 10"
+				stroke-dasharray="5 10"
 				stroke-width="1.5"
-				opacity=".5"
+				opacity=".2"
 			/>
 		{/each}
 	</g>
@@ -174,10 +203,11 @@
 		{/each}
 	</defs>
 
-	<g class="events">
+	<g bind:this={pinEvents} class="events">
 		{#each events as event, i}
 			<g class="group hover:cursor-pointer">
 				<rect
+					id={'event-' + i}
 					class="event hover:fill-lime-300"
 					x={mx}
 					y={y(event.start)}
@@ -201,7 +231,7 @@
 				<text
 					id={'label-artist-' + i}
 					dominant-baseline="hanging"
-					class="label-artists text-xl italic pointer-events-none group-hover:fill-lime-800"
+					class="label-artists font-light text-xl italic pointer-events-none group-hover:fill-lime-800"
 					x={mx}
 					y={y(event.start)}
 					dx="10"
@@ -227,7 +257,7 @@
 		{/each}
 
 		<circle cx={mx} cy={nowCoords} r="3" fill="red" />
-		<line x1={mx} y1={nowCoords} x2={width} y2={nowCoords} stroke-dasharray="10 5" stroke="red" />
+		<line x1={mx} y1={nowCoords} x2={width} y2={nowCoords} stroke-dasharray="5 10" stroke="red" />
 		<text x={width} y={nowCoords} text-anchor="end" class="text-xs" dy="-2" fill="red"
 			>{now.toLocaleTimeString()}</text
 		>
