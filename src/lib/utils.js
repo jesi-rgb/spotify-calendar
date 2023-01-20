@@ -87,7 +87,6 @@ export function generateRandomString(length) {
 function shapeData(tracks) {
 	if (tracks == undefined) return [];
 
-	console.log(tracks);
 	let events = tracks.map((t) => {
 		let hour = new Date(t.played_at);
 		let title = t.track.name;

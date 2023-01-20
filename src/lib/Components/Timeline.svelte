@@ -1,16 +1,26 @@
 <script>
 	import { scaleTime } from 'd3-scale';
-	import { interpolate, interpolateZoom, zoomIdentity, transition, easeLinear } from 'd3';
+	import {
+		interpolate,
+		interpolateZoom,
+		zoomIdentity,
+		zoomTransform,
+		transition,
+		easeLinear,
+		least
+	} from 'd3';
 
 	import { axisLeft } from 'd3-axis';
 	import { select, selectAll } from 'd3-selection';
-	import { zoom } from 'd3-zoom';
+	import { zoom, ZoomTransform } from 'd3-zoom';
 	import { dateFromHour, eventsFromTracks } from '../utils';
 	import { tracks } from '../../items';
+	import { onMount } from 'svelte';
 
 	export let timeResolution = 10;
 	export let my = 20;
 	export let mx = 80;
+	export let events = eventsFromTracks(tracks);
 
 	let pinComponent;
 	let pinYAxis;
@@ -36,22 +46,25 @@
 		return { x1: x1, y1: y1, x2: x2, y2: y2 };
 	});
 
-	let events = [
-		{ start: dateFromHour('17:00'), end: dateFromHour('17:03'), title: 'balls' },
-		{ start: dateFromHour('17:03'), end: dateFromHour('17:06'), title: 'damn' },
-		{ start: dateFromHour('12:00'), end: dateFromHour('12:23'), title: 'amar a rosanita' }
-	];
-	events = eventsFromTracks(tracks);
-	console.log(events);
+	const zoomBehaviour = zoom()
+		.interpolate(interpolateZoom.rho(0.1))
+		.scaleExtent([0.02, 80])
+		.filter(filter)
+		.on('zoom', zoomed);
 
-	const zoomBehaviour = zoom().scaleExtent([0.02, 60]).filter(filter).on('zoom', zoomed);
+	let now = new Date();
+	$: currentZoom = zoomTransform(select(pinComponent));
+	$: nowCoords = currentZoom.rescaleY(y)(now);
 
 	function filter(event) {
 		return (!event.ctrlKey || event.type === 'wheel') && !event.button;
 	}
+
 	function zoomed({ transform }) {
 		// update axis
 		let transformedY = transform.rescaleY(y);
+
+		currentZoom = transform;
 
 		lineCoords = transformedY.ticks(10).map((t) => {
 			let x1 = mx,
@@ -73,16 +86,6 @@
 				let endCoord = transformedY(d.end);
 				return endCoord - startCoord;
 			});
-		selectAll('.event-shadow')
-			.data(events)
-			.attr('x', (d) => mx + 4)
-			.attr('y', (d) => transformedY(d.start) + 4)
-			.attr('width', (d) => width - mx)
-			.attr('height', (d) => {
-				let startCoord = transformedY(d.start);
-				let endCoord = transformedY(d.end);
-				return endCoord - startCoord;
-			});
 
 		selectAll('.clip-rect')
 			.data(events)
@@ -95,12 +98,17 @@
 				return endCoord - startCoord;
 			});
 
-		selectAll('.event-title')
+		selectAll('.label-title')
 			.data(events)
 			.attr('x', (d) => mx)
 			.attr('y', (d) => transformedY(d.start));
 
-		selectAll('.event-secondary')
+		selectAll('.label-artists')
+			.data(events)
+			.attr('x', (d) => mx)
+			.attr('y', (d) => transformedY(d.start));
+
+		selectAll('.label-secondary')
 			.data(events)
 			.attr('x', (d) => mx)
 			.attr('y', (d) => transformedY(d.start));
@@ -112,7 +120,25 @@
 	$: if (pinYAxis) {
 		select(pinYAxis).call(yAxis);
 	}
+
+	function reset() {
+		select(pinComponent).transition().duration(1000).call(zoomBehaviour.transform, zoomIdentity);
+	}
+
+	onMount(() => {
+		const interval = setInterval(() => {
+			now = new Date();
+		}, 1000);
+
+		return () => {
+			clearInterval(interval);
+		};
+	});
 </script>
+
+<button on:click={() => reset()} class="bg-gray-300 rounded-sm px-2 py-1 ring ring-black m-4"
+	>Reset</button
+>
 
 <svg width={svg_width} height={svg_height} bind:this={pinComponent} class="m-4">
 	<g class="yAxis font-mona text-lg" transform="translate({mx},{my})" bind:this={pinYAxis} />
@@ -140,7 +166,7 @@
 					class="clip-rect"
 					x={mx}
 					y={y(event.start)}
-					width={width - mx}
+					width={width - 2 * mx}
 					height={y(event.end) - y(event.start)}
 					fill="white"
 				/>
@@ -150,15 +176,6 @@
 
 	<g class="events">
 		{#each events as event, i}
-			<rect
-				class="event-shadow"
-				x={mx + 4}
-				y={y(event.start) + 4}
-				width={width - mx}
-				height={y(event.end) - y(event.start)}
-				fill="lightblue"
-				opacity=".6"
-			/>
 			<g class="group hover:cursor-pointer">
 				<rect
 					class="event hover:fill-lime-300"
@@ -172,36 +189,62 @@
 				<text
 					id={'label-' + i}
 					dominant-baseline="hanging"
-					class="event-title font-semibold text-xl pointer-events-none group-hover:fill-lime-800"
+					class="label-title font-semibold text-xl pointer-events-none group-hover:fill-lime-800"
 					x={mx}
 					y={y(event.start)}
 					dx="10"
 					fill="white"
 					dy="10"
 					mask={'url(#clip-rect-' + i}
-					>{event.title} · {event.artists}
+					>{event.title}
 				</text>
 				<text
-					id={'label-secondary-' + i}
+					id={'label-artist-' + i}
 					dominant-baseline="hanging"
-					class="event-secondary text-lg pointer-events-none group-hover:fill-lime-700"
+					class="label-artists text-xl italic pointer-events-none group-hover:fill-lime-800"
 					x={mx}
 					y={y(event.start)}
 					dx="10"
 					fill="white"
 					dy="35"
+					mask={'url(#clip-rect-' + i}
+					>{event.artists}
+				</text>
+				<text
+					id={'label-secondary-' + i}
+					dominant-baseline="hanging"
+					class="label-secondary text-lg pointer-events-none group-hover:fill-lime-700"
+					x={mx}
+					y={y(event.start)}
+					dx="10"
+					fill="white"
+					dy="70"
 					opacity=".7"
 					mask={'url(#clip-rect-' + i}
 					>{new Date(event.duration).getMinutes()} minutes, {new Date(event.duration).getSeconds()} seconds
 				</text>
 			</g>
 		{/each}
+
+		<circle cx={mx} cy={nowCoords} r="3" fill="red" />
+		<line x1={mx} y1={nowCoords} x2={width} y2={nowCoords} stroke-dasharray="10 10" stroke="red" />
 	</g>
 </svg>
 
 <style>
-	.event-title {
+	:root {
+		--shadow-color: rgba(71, 138, 255, 0.48);
+	}
+	.event {
+		-webkit-filter: drop-shadow(3px 3px 2px var(--shadow-color));
+		filter: drop-shadow(3px 3px 0px var(--shadow-color));
+		/* Similar syntax to box-shadow */
+	}
+	.label-title {
 		font-variation-settings: 'wdth' 125;
+	}
+	.label-artists {
+		font-variation-settings: 'wdth' 75;
 	}
 	.yAxis {
 		font-variation-settings: 'wdth' 75;
