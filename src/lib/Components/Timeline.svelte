@@ -53,7 +53,7 @@
 		.on('zoom', zoomed);
 
 	let now = new Date();
-	$: currentZoom = zoomTransform(select(pinComponent));
+	let currentZoom = zoomTransform(select(pinComponent));
 	$: nowCoords = currentZoom.rescaleY(y)(now);
 
 	function filter(event) {
