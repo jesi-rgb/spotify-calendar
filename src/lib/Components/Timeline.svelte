@@ -227,7 +227,10 @@
 		{/each}
 
 		<circle cx={mx} cy={nowCoords} r="3" fill="red" />
-		<line x1={mx} y1={nowCoords} x2={width} y2={nowCoords} stroke-dasharray="10 10" stroke="red" />
+		<line x1={mx} y1={nowCoords} x2={width} y2={nowCoords} stroke-dasharray="10 5" stroke="red" />
+		<text x={width} y={nowCoords} text-anchor="end" class="text-xs" dy="-2" fill="red"
+			>{now.toLocaleTimeString()}</text
+		>
 	</g>
 </svg>
 
