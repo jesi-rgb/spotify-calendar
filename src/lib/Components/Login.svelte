@@ -39,7 +39,7 @@
 
 		<div class="text-3xl lg:text-4xl text-lime-900">A novel way to think about your playlists</div>
 	</div>
-	<p class="max-w-md text-xl mx-auto text-justify leading-tight">
+	<p class="max-w-sm text-xl mx-auto text-justify leading-tight">
 		Spotify Calendar allows you to see your recently played tracks in a calendar format, similar to
 		events you'd find in your typical day. Just log in and take a look at your busy day!
 	</p>
