@@ -168,7 +168,7 @@ export async function getInfo() {
 			data = await res.json();
 			data = eventsFromTracks(data.items);
 		} else {
-			console.log('mierdón');
+			console.log('token expired');
 			tokenExpired.set(true);
 		}
 	}
