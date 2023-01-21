@@ -213,7 +213,7 @@
 				<text
 					id={'label-artist-' + i}
 					dominant-baseline="hanging"
-					class="label-artists font-narrower text-xl pointer-events-none group-hover:fill-lime-800"
+					class="label-artists font-narrowest text-xl pointer-events-none group-hover:fill-lime-800"
 					x={mx}
 					y={y(event.start)}
 					dx="10"
