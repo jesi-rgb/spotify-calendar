@@ -26,10 +26,12 @@
 </script>
 
 {#await getInfo()}
-	<div class="flex items-center mx-auto max-w-md text-center text-4xl my-32">
+	<div
+		class="flex items-center justify-center mx-auto max-w-sm xl:max-w-xl text-center text-4xl xl:text-6xl my-32"
+	>
 		<svg
 			aria-hidden="true"
-			class="w-8 h-8 mr-2 text-gray-200 animate-spin fill-blue-600"
+			class="w-8 h-8 xl:w-10 xl:h-10 mr-2 text-gray-200 animate-spin fill-lime-600"
 			viewBox="0 0 100 101"
 			fill="none"
 			xmlns="http://www.w3.org/2000/svg"
