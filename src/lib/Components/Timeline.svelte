@@ -3,17 +3,15 @@
 	import { interpolateZoom, zoomIdentity, zoomTransform } from 'd3';
 
 	import { axisLeft } from 'd3-axis';
-	import { select, selectAll } from 'd3-selection';
+	import { select } from 'd3-selection';
 	import { zoom } from 'd3-zoom';
-	import { eventsFromTracks } from '../utils';
-	import { tracks } from '../../items';
 	import { onMount } from 'svelte';
 
 	//  external variables
 	export let timeResolution = 10;
 	export let my = 20;
 	export let mx = 80;
-	export let events = eventsFromTracks(tracks);
+	export let events = [];
 
 	//  functions
 	function filter(event) {
@@ -55,49 +53,11 @@
 		});
 
 		select(yAxisRef).call(yAxis.scale(transformedY));
-
-		selectAll('.event')
-			.data(events)
-			.attr('x', (d) => mx)
-			.attr('y', (d) => transformedY(d.start))
-			.attr('width', (d) => width - mx)
-			.attr('height', (d) => {
-				let startCoord = transformedY(d.start);
-				let endCoord = transformedY(d.end);
-				return endCoord - startCoord;
-			});
-
-		selectAll('.clip-rect')
-			.data(events)
-			.attr('x', (d) => mx)
-			.attr('y', (d) => transformedY(d.start))
-			.attr('width', (d) => width)
-			.attr('height', (d) => {
-				let startCoord = transformedY(d.start);
-				let endCoord = transformedY(d.end);
-				return endCoord - startCoord;
-			});
-
-		selectAll('.label-title')
-			.data(events)
-			.attr('x', (d) => mx)
-			.attr('y', (d) => transformedY(d.start));
-
-		selectAll('.label-artists')
-			.data(events)
-			.attr('x', (d) => mx)
-			.attr('y', (d) => transformedY(d.start));
-
-		selectAll('.label-secondary')
-			.data(events)
-			.attr('x', (d) => mx)
-			.attr('y', (d) => transformedY(d.start));
 	}
 
 	//  define lots of things
 	let svgRef;
 	let yAxisRef;
-	let eventsRef;
 
 	let svg_height = 1000;
 	let svg_width = 600;
@@ -112,6 +72,7 @@
 	let currentZoom = zoomTransform(select(svgRef));
 
 	// define reactive things
+	$: currentYScale = currentZoom.rescaleY(y);
 
 	$: height = svg_height - my * 2;
 	$: width = svg_width - mx;
@@ -141,12 +102,32 @@
 	}
 
 	onMount(() => {
-		const interval = setInterval(() => {
+		// this interval controls the clock
+		const seconds = setInterval(() => {
 			now = new Date();
 		}, 1000);
 
+		// this interval controls the data fetching
+		// const dataFetch = setInterval(() => {
+		// 	let startDate = new Date(2023, 0, 22, Math.random() * 12);
+		// 	let startHours = startDate.getHours();
+		// 	let endDate = new Date(2023, 0, 22, startHours + 1);
+		// 	events = [
+		// 		...events,
+		// 		{
+		// 			start: startDate,
+		// 			end: endDate,
+		// 			title: 'Mierdon',
+		// 			color: '#123456',
+		// 			duration: 123435,
+		// 			artists: 'Su pollica de ellos'
+		// 		}
+		// 	];
+		// }, 1900);
+
 		return () => {
-			clearInterval(interval);
+			// clearInterval(dataFetch);
+			clearInterval(seconds);
 		};
 	});
 </script>
@@ -176,16 +157,16 @@
 					id={'clip-rect-' + i}
 					class="clip-rect"
 					x={mx}
-					y={y(event.start)}
+					y={currentYScale(event.start)}
 					width={width - 2 * mx}
-					height={y(event.end) - y(event.start)}
+					height={currentYScale(event.end) - currentYScale(event.start)}
 					fill="white"
 				/>
 			</mask>
 		{/each}
 	</defs>
 
-	<g bind:this={eventsRef} class="events">
+	<g class="events">
 		{#each events as event, i}
 			<g class="group hover:cursor-pointer">
 				<!-- svelte-ignore a11y-click-events-have-key-events -->
@@ -194,16 +175,16 @@
 					id={'event-' + i}
 					class="event hover:fill-lime-300 fill-purple-500 stroke-2 stroke-purple-900"
 					x={mx}
-					y={y(event.start)}
+					y={currentYScale(event.start)}
 					width={width - mx}
-					height={y(event.end) - y(event.start)}
+					height={currentYScale(event.end) - currentYScale(event.start)}
 				/>
 				<text
 					id={'label-' + i}
 					dominant-baseline="hanging"
 					class="label-title font-widest font-bold text-2xl pointer-events-none group-hover:fill-lime-800"
 					x={mx}
-					y={y(event.start)}
+					y={currentYScale(event.start)}
 					dx="10"
 					fill="white"
 					dy="10"
@@ -215,7 +196,7 @@
 					dominant-baseline="hanging"
 					class="label-artists font-narrowest text-xl pointer-events-none group-hover:fill-lime-800"
 					x={mx}
-					y={y(event.start)}
+					y={currentYScale(event.start)}
 					dx="10"
 					fill="white"
 					dy="40"
@@ -227,7 +208,7 @@
 					dominant-baseline="hanging"
 					class="label-secondary font-light font-narrower text-lg pointer-events-none group-hover:fill-lime-700"
 					x={mx}
-					y={y(event.start)}
+					y={currentYScale(event.start)}
 					dx="10"
 					fill="white"
 					dy="70"
