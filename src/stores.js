@@ -10,13 +10,13 @@ export const token = readable(null, function start(set) {
 	}
 	const access_token = hashParams.access_token;
 	set(access_token);
-
-	window.history.pushState('object or string', 'Title', '/');
 });
 
 export const appUrl = readable(null, function start(set) {
 	set('https://spotify-calendar.vercel.app');
-	// set('http://localhost:5173');
+	set('http://localhost:5173');
 });
 
 export const tokenExpired = writable(false);
+
+export const seenDays = writable([new Date()]);

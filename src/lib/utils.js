@@ -116,14 +116,23 @@ export function eventsFromTracks(tracks) {
 	for (let i = 0; i < shapedData.length - 1; i++) {
 		const d = shapedData[i];
 		const currentSongStart = d.start;
+		// supposedly, this is when the song should end: the start + its duration
 		const supposedEnd = new Date(Date.parse(currentSongStart) + d.trackDuration);
-		// const supposedEnd = new Date(Date.parse(currentSongStart) + 30 * 1000);
 
+		// but we might have skipped a song. which means, the song after it will
+		// start before the last song was supposed to end.
+
+		// so we calculate the next song's start...
 		const nextSongStart = shapedData[i + 1].start;
+
+		// we calculate what would be the 'premature end' for this song; that is,
+		// when it actually stopped playing had we skipped it
 		const supposedPrematureEnd = new Date(
 			Date.parse(currentSongStart) + (Date.parse(nextSongStart) - Date.parse(currentSongStart))
 		);
 
+		// and then say: if the premature end is less than the end, we stick with that. or, put
+		// it differently, stick with whatever end was smaller, ie, sooner.
 		let definitiveEnd = supposedPrematureEnd < supposedEnd ? supposedPrematureEnd : supposedEnd;
 
 		events.push({
@@ -132,7 +141,8 @@ export function eventsFromTracks(tracks) {
 			title: d.title,
 			color: '#123456',
 			duration: d.trackDuration,
-			artists: d.artists
+			artists: d.artists,
+			link: d.trackLink
 		});
 	}
 
@@ -147,30 +157,4 @@ export function dateFromHour(timeHours) {
 	date.setHours(hours);
 	date.setMinutes(minutes);
 	return date;
-}
-
-import { token, tokenExpired } from '../stores';
-
-export async function getInfo() {
-	const accessToken = token;
-	let data;
-	const url = new URL('https://api.spotify.com/v1/me/player/recently-played');
-	// const params = new URLSearchParams({
-	// 	before: new Date().getMilliseconds()
-	// });
-	if (accessToken) {
-		const res = await fetch(url, {
-			headers: {
-				Authorization: 'Bearer ' + accessToken
-			}
-		});
-		if (res.ok) {
-			data = await res.json();
-			data = eventsFromTracks(data.items);
-		} else {
-			console.log('token expired');
-			tokenExpired.set(true);
-		}
-	}
-	return data;
 }

@@ -3,7 +3,7 @@
 >
 	<svg
 		aria-hidden="true"
-		class="w-8 h-8 xl:w-10 xl:h-10 mr-2 text-lime-800 animate-spin fill-lime-100"
+		class="w-8 h-8 xl:w-10 xl:h-10 mr-2 text-lime-400 animate-spin fill-lime-800"
 		viewBox="0 0 100 101"
 		fill="none"
 		xmlns="http://www.w3.org/2000/svg"

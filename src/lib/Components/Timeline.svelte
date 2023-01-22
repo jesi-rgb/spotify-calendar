@@ -6,11 +6,15 @@
 	import { select } from 'd3-selection';
 	import { zoom } from 'd3-zoom';
 	import { onMount } from 'svelte';
+	import { trackAndFetchIncomingDates } from '../fetcher';
+	import { seenDays } from '../../stores';
+	import { get } from 'svelte/store';
+	// import { nextBatchOfTracks } from '../utils';
 
 	//  external variables
 	export let timeResolution = 10;
 	export let my = 20;
-	export let mx = 80;
+	export let mx = 85;
 	export let events = [];
 
 	//  functions
@@ -59,7 +63,7 @@
 	let svgRef;
 	let yAxisRef;
 
-	let svg_height = 1000;
+	let svg_height = 900;
 	let svg_width = 600;
 
 	const zoomBehaviour = zoom()
@@ -70,9 +74,15 @@
 
 	let now = new Date();
 	let currentZoom = zoomTransform(select(svgRef));
+	$: console.log('changed: ' + $seenDays);
 
 	// define reactive things
 	$: currentYScale = currentZoom.rescaleY(y);
+
+	// TODO: we need to somehow overwrite the events array. struggling hard to do this
+	// $: trackAndFetchIncomingDates(events, currentYScale.ticks()).then((v) => {
+	// 	events = [...v, events];
+	// });
 
 	$: height = svg_height - my * 2;
 	$: width = svg_width - mx;
@@ -107,140 +117,147 @@
 			now = new Date();
 		}, 1000);
 
-		// this interval controls the data fetching
-		// const dataFetch = setInterval(() => {
-		// 	let startDate = new Date(2023, 0, 22, Math.random() * 12);
-		// 	let startHours = startDate.getHours();
-		// 	let endDate = new Date(2023, 0, 22, startHours + 1);
-		// 	events = [
-		// 		...events,
-		// 		{
-		// 			start: startDate,
-		// 			end: endDate,
-		// 			title: 'Mierdon',
-		// 			color: '#123456',
-		// 			duration: 123435,
-		// 			artists: 'Su pollica de ellos'
-		// 		}
-		// 	];
+		// const bruh = setInterval(() => {
+		// 	// events = nextBatchOfTracks(events);
 		// }, 1900);
 
 		return () => {
-			// clearInterval(dataFetch);
+			// clearInterval(bruh);
 			clearInterval(seconds);
 		};
 	});
 </script>
 
-<svg width={svg_width} height={svg_height} bind:this={svgRef} class="m-4">
-	<g class="yAxis font-mona text-lg" transform="translate({mx},{my})" bind:this={yAxisRef} />
-	<g>
-		{#each lineCoords as coord}
-			<line
-				class="dashed-lines"
-				x1={coord.x1}
-				x2={coord.x2}
-				y1={coord.y1}
-				y2={coord.y2}
-				stroke="steelblue"
-				stroke-dasharray="5 10"
-				stroke-width="1.5"
-				opacity=".2"
-			/>
-		{/each}
-	</g>
-
-	<defs>
-		{#each events as event, i}
-			<mask id={'clip-rect-' + i}>
-				<rect
-					id={'clip-rect-' + i}
-					class="clip-rect"
-					x={mx}
-					y={currentYScale(event.start)}
-					width={width - 2 * mx}
-					height={currentYScale(event.end) - currentYScale(event.start)}
-					fill="white"
-				/>
-			</mask>
-		{/each}
-	</defs>
-
-	<g class="events">
-		{#each events as event, i}
-			<g class="group hover:cursor-pointer">
-				<!-- svelte-ignore a11y-click-events-have-key-events -->
-				<rect
-					on:click={() => focusOnEvent(i)}
-					id={'event-' + i}
-					class="event hover:fill-lime-300 fill-purple-500 stroke-2 stroke-purple-900"
-					x={mx}
-					y={currentYScale(event.start)}
-					width={width - mx}
-					height={currentYScale(event.end) - currentYScale(event.start)}
-				/>
-				<text
-					id={'label-' + i}
-					dominant-baseline="hanging"
-					class="label-title font-widest font-bold text-2xl pointer-events-none group-hover:fill-lime-800"
-					x={mx}
-					y={currentYScale(event.start)}
-					dx="10"
-					fill="white"
-					dy="10"
-					mask={'url(#clip-rect-' + i}
-					>{event.title}
-				</text>
-				<text
-					id={'label-artist-' + i}
-					dominant-baseline="hanging"
-					class="label-artists font-narrowest text-xl pointer-events-none group-hover:fill-lime-800"
-					x={mx}
-					y={currentYScale(event.start)}
-					dx="10"
-					fill="white"
-					dy="40"
-					mask={'url(#clip-rect-' + i}
-					>{event.artists}
-				</text>
-				<text
-					id={'label-secondary-' + i}
-					dominant-baseline="hanging"
-					class="label-secondary font-light font-narrower text-lg pointer-events-none group-hover:fill-lime-700"
-					x={mx}
-					y={currentYScale(event.start)}
-					dx="10"
-					fill="white"
-					dy="70"
-					opacity=".7"
-					mask={'url(#clip-rect-' + i}
-					>{new Date(event.duration).getMinutes()} minutes, {new Date(event.duration).getSeconds()} seconds
-				</text>
-			</g>
-		{/each}
-
-		<circle cx={mx} cy={nowCoords} r="3" class="fill-purple-800" />
-		<line
-			x1={mx}
-			y1={nowCoords}
-			x2={width}
-			y2={nowCoords}
-			stroke-dasharray="5 10"
-			class="stroke-purple-800"
+<div class="max-w-xs mx-0 md:max-w-2xl md:mx-auto  justify-center">
+	<svg
+		width={svg_width}
+		height={svg_height}
+		viewBox="{mx / 2} {my} {width} {height - my}"
+		bind:this={svgRef}
+		class="m-4"
+	>
+		<g
+			class="yAxis font-mona font-narrower text-lg"
+			transform="translate({mx},{my})"
+			bind:this={yAxisRef}
 		/>
-		<text x={width} y={nowCoords} text-anchor="end" class="text-xs fill-purple-800" dy="-2"
-			>{now.toLocaleTimeString()}</text
-		>
-	</g>
-</svg>
+		<g>
+			{#each lineCoords as coord}
+				<line
+					class="dashed-lines"
+					x1={coord.x1}
+					x2={coord.x2}
+					y1={coord.y1}
+					y2={coord.y2}
+					stroke="steelblue"
+					stroke-dasharray="5 10"
+					stroke-width="1.5"
+					opacity=".2"
+				/>
+			{/each}
+		</g>
 
-<button
-	on:click={() => focusOnEvent(0)}
-	class="bg-gray-300 rounded-sm px-2 py-1 ring ring-black m-4">Oldest song</button
->
-<button on:click={() => reset()} class="bg-gray-300 rounded-sm px-2 py-1 ring ring-black m-4"
-	>Now</button
->
+		<defs>
+			{#each events as event, i}
+				<mask id={'clip-rect-' + i}>
+					<rect
+						id={'clip-rect-' + i}
+						class="clip-rect"
+						x={mx}
+						y={currentYScale(event.start)}
+						width={width - mx}
+						height={currentYScale(event.end) - currentYScale(event.start)}
+						fill="white"
+					/>
+				</mask>
+			{/each}
+		</defs>
+
+		<g class="events">
+			{#each events as event, i}
+				<g class="group hover:cursor-pointer">
+					<!-- svelte-ignore a11y-click-events-have-key-events -->
+					<rect
+						on:click={() => focusOnEvent(i)}
+						id={'event-' + i}
+						class="event transition-colors hover:fill-lime-300 hover:stroke-lime-900 fill-purple-500 stroke-2 stroke-purple-900"
+						x={mx}
+						y={currentYScale(event.start)}
+						width={width - mx}
+						height={currentYScale(event.end) - currentYScale(event.start)}
+					/>
+
+					<text
+						id={'label-' + i}
+						dominant-baseline="hanging"
+						class="label-title font-widest font-bold text-2xl pointer-events-none group-hover:fill-lime-800"
+						x={mx}
+						y={currentYScale(event.start)}
+						dx="10"
+						fill="white"
+						dy="10"
+						mask={'url(#clip-rect-' + i}
+						>{event.title}
+					</text>
+					<text
+						id={'label-artist-' + i}
+						dominant-baseline="hanging"
+						class="label-artists font-narrowest text-xl pointer-events-none group-hover:fill-lime-800"
+						x={mx}
+						y={currentYScale(event.start)}
+						dx="10"
+						fill="white"
+						dy="40"
+						mask={'url(#clip-rect-' + i}
+						>{event.artists}
+					</text>
+					<text
+						id={'label-secondary-' + i}
+						dominant-baseline="hanging"
+						class="label-secondary font-light font-narrower text-lg pointer-events-none group-hover:fill-lime-700"
+						x={mx}
+						y={currentYScale(event.start)}
+						dx="10"
+						fill="white"
+						dy="70"
+						opacity=".7"
+						mask={'url(#clip-rect-' + i}
+						>{new Date(event.duration).getMinutes()} minutes, {new Date(
+							event.duration
+						).getSeconds()} seconds
+					</text>
+				</g>
+			{/each}
+
+			<circle cx={mx} cy={nowCoords} r="3" class="fill-purple-800" />
+			<line
+				x1={mx}
+				y1={nowCoords}
+				x2={width}
+				y2={nowCoords}
+				stroke-dasharray="5 10"
+				class="stroke-purple-800"
+			/>
+			<text
+				x={width}
+				y={nowCoords}
+				text-anchor="end"
+				class="text-xs font-widest fill-purple-800"
+				dy="-2">{now.toLocaleTimeString()}</text
+			>
+		</g>
+	</svg>
+
+	<div class="flex absolute right-0 text-lime-900">
+		<button
+			on:click={() => focusOnEvent(0)}
+			class="bg-lime-300 rounded-sm px-2 py-1 ring ring-lime-800 m-4">Oldest song</button
+		>
+		<button on:click={() => reset()} class="bg-lime-300 rounded-sm px-2 py-1 ring ring-lime-800 m-4"
+			>Now</button
+		>
+	</div>
+</div>
 
 <style>
 	:root {
