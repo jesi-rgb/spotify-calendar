@@ -1,4 +1,4 @@
-import { token, tokenExpired, seenDays } from '../stores';
+import { token, tokenExpired, seenDays, events } from '../stores';
 import { get } from 'svelte/store';
 import { eventsFromTracks } from '../lib/utils';
 
@@ -7,7 +7,7 @@ export async function getInfo() {
 	let data;
 	let url = new URL('https://api.spotify.com/v1/me/player/recently-played?');
 	let params = new URLSearchParams({
-		after: new Date().setHours(0)
+		limit: 50
 	});
 
 	url += params;
@@ -20,24 +20,27 @@ export async function getInfo() {
 		});
 		if (res.ok) {
 			data = await res.json();
+			events.set(eventsFromTracks(data.items));
 		} else {
 			console.log(res.statusText);
 			tokenExpired.set(true);
 		}
 	}
-	return data;
 }
 
 async function fetchDataBefore(before) {
+	console.log(before);
 	let accessToken = get(token);
 	let url = new URL('https://api.spotify.com/v1/me/player/recently-played?');
 
-	let urlParams;
+	let params = { limit: 50 };
 	if (before !== undefined && !isNaN(before)) {
-		urlParams = new URLSearchParams({ before: before });
+		params.before = before;
 	}
 
+	let urlParams = new URLSearchParams(params);
 	url += urlParams;
+	console.log(url);
 
 	let data;
 	if (accessToken) {
@@ -56,23 +59,27 @@ async function fetchDataBefore(before) {
 	return data.items;
 }
 
-export async function trackAndFetchIncomingDates(events, ticks) {
-	let targetDate = events[0].start;
+export async function trackAndFetchIncomingDates(ticks) {
 	let seenDaysRef = get(seenDays);
+	let eventsRef = get(events);
+	let targetDate = Date.parse(eventsRef[0]?.start);
 
+	let newEvents;
 	for (let i = 0; i < ticks.length; i++) {
-		let t = ticks[i];
+		let t = Date.parse(ticks[i]);
 
 		if (t <= targetDate && !seenDaysRef.includes(targetDate)) {
 			seenDays.set([...seenDaysRef, targetDate]);
-			console.log(seenDaysRef);
-			console.log('[trackIncomingDates] FETCHING DATA BEFORE ' + targetDate);
-			return await fetchDataBefore(Date.parse(targetDate));
-
-			// return [];
+			newEvents = await fetchDataBefore(targetDate);
+			break;
 		}
 	}
-	return [];
+
+	if (newEvents) {
+		console.log('FETCHING before ' + new Date(targetDate), eventsRef);
+
+		events.set(eventsFromTracks(newEvents).concat(eventsRef));
+	}
 }
 export function nextBatchOfTracks(events) {
 	let beforeFetch = new Date(events[0].start);

@@ -20,3 +20,5 @@ export const appUrl = readable(null, function start(set) {
 export const tokenExpired = writable(false);
 
 export const seenDays = writable([new Date()]);
+
+export const events = writable([]);

@@ -8,14 +8,14 @@
 	import { onMount } from 'svelte';
 	import { trackAndFetchIncomingDates } from '../fetcher';
 	import { seenDays } from '../../stores';
-	import { get } from 'svelte/store';
+	import { events } from '../../stores';
 	// import { nextBatchOfTracks } from '../utils';
 
 	//  external variables
 	export let timeResolution = 10;
 	export let my = 20;
 	export let mx = 85;
-	export let events = [];
+	// export let events = [];
 
 	//  functions
 	function filter(event) {
@@ -27,7 +27,7 @@
 	}
 
 	function focusOnEvent(i) {
-		const coord = y(events[i].start);
+		const coord = y($events[i].start);
 
 		reset();
 		select(svgRef)
@@ -63,7 +63,7 @@
 	let svgRef;
 	let yAxisRef;
 
-	let svg_height = 900;
+	let svg_height = 950;
 	let svg_width = 600;
 
 	const zoomBehaviour = zoom()
@@ -73,16 +73,12 @@
 		.on('zoom', zoomed);
 
 	let now = new Date();
-	let currentZoom = zoomTransform(select(svgRef));
-	$: console.log('changed: ' + $seenDays);
+	$: currentZoom = zoomTransform(select(svgRef));
 
 	// define reactive things
 	$: currentYScale = currentZoom.rescaleY(y);
 
-	// TODO: we need to somehow overwrite the events array. struggling hard to do this
-	// $: trackAndFetchIncomingDates(events, currentYScale.ticks()).then((v) => {
-	// 	events = [...v, events];
-	// });
+	$: trackAndFetchIncomingDates(currentYScale.ticks());
 
 	$: height = svg_height - my * 2;
 	$: width = svg_width - mx;
@@ -117,18 +113,13 @@
 			now = new Date();
 		}, 1000);
 
-		// const bruh = setInterval(() => {
-		// 	// events = nextBatchOfTracks(events);
-		// }, 1900);
-
 		return () => {
-			// clearInterval(bruh);
 			clearInterval(seconds);
 		};
 	});
 </script>
 
-<div class="max-w-xs mx-0 md:max-w-2xl md:mx-auto  justify-center">
+<div class="max-w-xs mx-0 md:max-w-2xl md:mx-auto justify-center">
 	<svg
 		width={svg_width}
 		height={svg_height}
@@ -158,7 +149,7 @@
 		</g>
 
 		<defs>
-			{#each events as event, i}
+			{#each $events as event, i}
 				<mask id={'clip-rect-' + i}>
 					<rect
 						id={'clip-rect-' + i}
@@ -174,7 +165,7 @@
 		</defs>
 
 		<g class="events">
-			{#each events as event, i}
+			{#each $events as event, i}
 				<g class="group hover:cursor-pointer">
 					<!-- svelte-ignore a11y-click-events-have-key-events -->
 					<rect
@@ -248,7 +239,7 @@
 		</g>
 	</svg>
 
-	<div class="flex absolute right-0 text-lime-900">
+	<div class="flex justify-center text-lime-900">
 		<button
 			on:click={() => focusOnEvent(0)}
 			class="bg-lime-300 rounded-sm px-2 py-1 ring ring-lime-800 m-4">Oldest song</button

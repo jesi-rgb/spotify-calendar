@@ -146,6 +146,17 @@ export function eventsFromTracks(tracks) {
 		});
 	}
 
+	let lastSong = shapedData[shapeData.length - 1];
+	events.push({
+		start: lastSong.start,
+		end: new Date(Date.parse(lastSong.start) + lastSong.trackDuration),
+		title: lastSong.title,
+		color: '#123456',
+		duration: lastSong.trackDuration,
+		artists: lastSong.artists,
+		link: lastSong.trackLink
+	});
+
 	return events;
 }
 
